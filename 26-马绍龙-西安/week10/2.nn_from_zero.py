@@ -72,7 +72,7 @@ for record in test_data_list:
     all_values = record.split(',')
     correct_number = int(all_values[0])
     print("该图片对应的数字为:", correct_number)
-    # 预处理数字图片
+    # 预处理数字图片，进行特殊的归一化，避免小像素值除255后变为0，影响后续计算，数据区间变为[0.01,1]
     inputs = (np.asfarray(all_values[1:])) / 255.0 * 0.99 + 0.01
     # 让模型判断图片对应的数字,推理
     outputs = n.query(inputs)
