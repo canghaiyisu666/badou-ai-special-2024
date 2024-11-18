@@ -125,57 +125,81 @@ class FRCNN(object):
         bboxes = []
         probs = []
         labels = []
-        for jk in range(R.shape[0]//self.config.num_rois + 1):
-            ROIs = np.expand_dims(R[self.config.num_rois*jk:self.config.num_rois*(jk+1), :], axis=0)
 
+        # 遍历感兴趣区域（ROIs）的批次
+        for jk in range(R.shape[0] // self.config.num_rois + 1):
+            # 提取一批ROIs并增加一个维度以表示批次大小
+            ROIs = np.expand_dims(R[self.config.num_rois * jk:self.config.num_rois * (jk + 1), :], axis=0)
+
+            # 如果当前批次没有ROIs，跳出循环
             if ROIs.shape[1] == 0:
                 break
 
+            # 如果是最后一个批次且ROIs数量少于配置的数量，对ROIs进行填充
             if jk == R.shape[0] // self.config.num_rois:
+                # 获取当前形状
                 # pad R
                 curr_shape = ROIs.shape
+                # 设置目标形状
                 target_shape = (curr_shape[0], self.config.num_rois, curr_shape[2])
+                # 创建填充后的ROIs数组
                 ROIs_padded = np.zeros(target_shape).astype(ROIs.dtype)
+                # 填充现有ROIs
                 ROIs_padded[:, :curr_shape[1], :] = ROIs
+                # 填充剩余部分
                 ROIs_padded[0, curr_shape[1]:, :] = ROIs[0, 0, :]
+                # 更新ROIs
                 ROIs = ROIs_padded
 
+            # 使用模型预测分类和回归结果
             [P_cls, P_regr] = self.model_classifier.predict([base_layer, ROIs])
 
+            # 遍历预测结果中的每个ROI
             for ii in range(P_cls.shape[1]):
+                # 如果最大概率低于阈值或最大概率对应的类别是背景类，跳过
                 if np.max(P_cls[0, ii, :]) < self.confidence or np.argmax(P_cls[0, ii, :]) == (P_cls.shape[2] - 1):
                     continue
 
+                # 获取预测的类别标签
                 label = np.argmax(P_cls[0, ii, :])
 
+                # 获取ROI的坐标和尺寸
                 (x, y, w, h) = ROIs[0, ii, :]
 
+                # 获取预测的类别编号
                 cls_num = np.argmax(P_cls[0, ii, :])
 
-                (tx, ty, tw, th) = P_regr[0, ii, 4*cls_num:4*(cls_num+1)]
+                # 获取预测的回归参数
+                (tx, ty, tw, th) = P_regr[0, ii, 4 * cls_num:4 * (cls_num + 1)]
+                # 对回归参数进行标准化处理
                 tx /= self.config.classifier_regr_std[0]
                 ty /= self.config.classifier_regr_std[1]
                 tw /= self.config.classifier_regr_std[2]
                 th /= self.config.classifier_regr_std[3]
 
-                cx = x + w/2.
-                cy = y + h/2.
+                # 计算中心点坐标
+                cx = x + w / 2.
+                cy = y + h / 2.
+                # 应用回归参数调整中心点坐标
                 cx1 = tx * w + cx
                 cy1 = ty * h + cy
+                # 应用回归参数调整宽度和高度
                 w1 = math.exp(tw) * w
                 h1 = math.exp(th) * h
 
-                x1 = cx1 - w1/2.
-                y1 = cy1 - h1/2.
+                # 计算新的边界框坐标
+                x1 = cx1 - w1 / 2.
+                y1 = cy1 - h1 / 2.
+                x2 = cx1 + w1 / 2
+                y2 = cy1 + h1 / 2
 
-                x2 = cx1 + w1/2
-                y2 = cy1 + h1/2
-
+                # 将坐标转换为整数
                 x1 = int(round(x1))
                 y1 = int(round(y1))
                 x2 = int(round(x2))
                 y2 = int(round(y2))
 
+                # 将边界框、概率和标签添加到列表中
                 bboxes.append([x1, y1, x2, y2])
                 probs.append(np.max(P_cls[0, ii, :]))
                 labels.append(label)
