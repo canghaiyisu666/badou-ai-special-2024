@@ -62,9 +62,28 @@ def cls_loss(ratio=3):
 
 
 def smooth_l1(sigma=1.0):
+    """
+    创建一个 Smooth L1 损失函数，用于回归任务。
+
+    参数:
+    - sigma: 控制损失函数平滑度的参数，默认为1.0。
+
+    返回:
+    - 一个用于计算 Smooth L1 损失的函数。
+    """
     sigma_squared = sigma ** 2
 
     def _smooth_l1(y_true, y_pred):
+        """
+        计算 Smooth L1 损失。
+
+        参数:
+        - y_true: 真实值，包含锚框的状态信息。
+        - y_pred: 预测值，包含锚框的回归信息。
+
+        返回:
+        - Smooth L1 损失值。
+        """
         # y_true [batch_size, num_anchor, 4+1]
         # y_pred [batch_size, num_anchor, 4]
         regression = y_pred
@@ -87,6 +106,7 @@ def smooth_l1(sigma=1.0):
             regression_diff - 0.5 / sigma_squared
         )
 
+        # 计算损失的归一化因子
         normalizer = keras.backend.maximum(1, keras.backend.shape(indices)[0])
         normalizer = keras.backend.cast(normalizer, dtype=keras.backend.floatx())
         loss = keras.backend.sum(regression_loss) / normalizer

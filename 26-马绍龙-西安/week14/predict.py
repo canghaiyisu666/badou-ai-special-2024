@@ -5,11 +5,13 @@ from PIL import Image
 # 初始化Faster R-CNN对象，用于后续的图像检测
 frcnn = FRCNN()
 
+img_path = 'img/car.jpg'
+
 # 尝试打开指定的图像文件
-img = input('img/street.jpg')
+img = input(img_path)
 try:
     # 使用PIL库打开图像文件
-    image = Image.open('img/street.jpg')
+    image = Image.open(img_path)
 except:
     # 如果打开失败，输出错误信息并提示重新尝试
     print('Open Error! Try again!')
