@@ -341,7 +341,7 @@ class DetectionLayer(Layer):
         super(DetectionLayer, self).__init__(**kwargs)
         self.config = config
 
-    def call(self, inputs):
+    def call(self, inputs):                     #     做mask的过程**************************
         rois = inputs[0]
         mrcnn_class = inputs[1]
         mrcnn_bbox = inputs[2]

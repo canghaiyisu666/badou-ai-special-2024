@@ -522,7 +522,7 @@ def compute_recall(pred_boxes, gt_boxes, iou):
     return recall, positive_ids
 
 
-def batch_slice(inputs, graph_fn, batch_size, names=None):
+def batch_slice(inputs, graph_fn, batch_size, names=None):      #把一个或多个batch切分，使内存能放下
     """Splits inputs into slices and feeds each slice to a copy of the given
     computation graph and then combines the results. It allows you to run a
     graph on a batch of inputs even if the graph is written to support one

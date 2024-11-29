@@ -59,11 +59,11 @@ def fpn_classifier_graph(rois, feature_maps, image_meta,
                          pool_size, num_classes, train_bn=True,
                          fc_layers_size=1024):
     # ROI Pooling，利用建议框在特征层上进行截取
-    # Shape: [batch, num_rois, POOL_SIZE, POOL_SIZE, channels]
+    # Shape: [batch, num_rois, POOL_SIZE, POOL_SIZE, channels]                       ROIAlign接口调用
     x = PyramidROIAlign([pool_size, pool_size],
                         name="roi_align_classifier")([rois, image_meta] + feature_maps)
 
-    # Shape: [batch, num_rois, 1, 1, fc_layers_size]，相当于两次全连接
+    # Shape: [batch, num_rois, 1, 1, fc_layers_size]，              相当于两次全连接             卷积代替全连接
     x = TimeDistributed(Conv2D(fc_layers_size, (pool_size, pool_size), padding="valid"),
                            name="mrcnn_class_conv1")(x)
     x = TimeDistributed(BatchNormalization(), name='mrcnn_class_bn1')(x, training=train_bn)
@@ -134,7 +134,7 @@ def build_fpn_mask_graph(rois, feature_maps, image_meta,
                            name='mrcnn_mask_bn4')(x, training=train_bn)
     x = Activation('relu')(x)
 
-    # Shape: [batch, num_rois, 2xMASK_POOL_SIZE, 2xMASK_POOL_SIZE, channels]
+    # Shape: [batch, num_rois, 2xMASK_POOL_SIZE, 2xMASK_POOL_SIZE, channels]                            反卷积接口
     x = TimeDistributed(Conv2DTranspose(256, (2, 2), strides=2, activation="relu"),
                            name="mrcnn_mask_deconv")(x)
     # 反卷积后再次进行一个1x1卷积调整通道，使其最终数量为numclasses，代表分的类
@@ -219,7 +219,7 @@ def get_predict_model(config):
 
     rpn_class_logits = Concatenate(axis=1,name="rpn_class_logits")(rpn_class_logits)
     rpn_class = Concatenate(axis=1,name="rpn_class")(rpn_class)
-    rpn_bbox = Concatenate(axis=1,name="rpn_bbox")(rpn_bbox)
+    rpn_bbox = Concatenate(axis=1,name="rpn_bbox")(rpn_bbox)                               #此时concat后的是总结果
 
     # 此时获得的rpn_class_logits、rpn_class、rpn_bbox的维度是
     # rpn_class_logits : Batch_size, num_anchors, 2
@@ -229,6 +229,20 @@ def get_predict_model(config):
 
     # Batch_size, proposal_count, 4
     # 对先验框进行解码
+
+    # 创建ProposalLayer实例并生成区域建议
+    # 该层根据RPN的输出和预定义的锚框，通过非极大值抑制(NMS)选择最有可能包含对象的区域
+    # 参数:
+    # - proposal_count: 每个图像提出的区域数量上限
+    # - nms_threshold: 非极大值抑制的阈值，用于筛选重叠的区域建议
+    # - name: 层的名称，用于模型定义
+    # - config: 模型配置对象，包含其他相关配置
+    # 输入:
+    # - rpn_class: RPN的类别预测结果
+    # - rpn_bbox: RPN的边界框预测结果
+    # - anchors: 预定义的锚框坐标
+    # 输出:
+    # - rpn_rois: 选择后的区域建议坐标
     rpn_rois = ProposalLayer(
             proposal_count=proposal_count,
             nms_threshold=config.RPN_NMS_THRESHOLD,
