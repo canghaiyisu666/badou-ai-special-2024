@@ -3,11 +3,11 @@ import random
 
 # 定义XML文件路径和保存基础路径
 xmlfilepath = r'./VOCdevkit/VOC2007/Annotations'
-saveBasePath = r"./VOCdevkit/VOC2007/imageSets/Main/"
+saveBasePath = r"./VOCdevkit/VOC2007/ImageSets/Main/"
 
 # 定义训练验证集和训练集的比例
-trainval_percent = 0.9
-train_percent = 0.8
+trainval_percent = 1
+train_percent = 1
 
 # 获取XML文件夹中的所有文件，并筛选出.xml文件
 temp_xml = os.listdir(xmlfilepath)

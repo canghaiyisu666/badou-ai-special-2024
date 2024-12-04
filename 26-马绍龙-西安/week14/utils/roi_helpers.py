@@ -139,7 +139,8 @@ def calc_iou(R, config, all_boxes, width, height, num_classes):
                 tw = np.log((gta[best_bbox, 2] - gta[best_bbox, 0]) / float(w))
                 th = np.log((gta[best_bbox, 3] - gta[best_bbox, 1]) / float(h))
             else:
-                raise RuntimeError('Invalid IOU value')
+                print('roi = {}'.format(best_iou))
+                raise RuntimeError
 
         # 根据标签更新类别计数和回归坐标
         class_label = num_classes * [0]
@@ -152,8 +153,11 @@ def calc_iou(R, config, all_boxes, width, height, num_classes):
             sx, sy, sw, sh = config.classifier_regr_std
             coords[label_pos:4 + label_pos] = [sx * tx, sy * ty, sw * tw, sh * th]
             labels[label_pos:4 + label_pos] = [1, 1, 1, 1]
-        y_class_regr_coords.append(copy.deepcopy(coords))
-        y_class_regr_label.append(copy.deepcopy(labels))
+            y_class_regr_coords.append(copy.deepcopy(coords))
+            y_class_regr_label.append(copy.deepcopy(labels))
+        else:
+            y_class_regr_coords.append(copy.deepcopy(coords))
+            y_class_regr_label.append(copy.deepcopy(labels))
 
     # 如果没有符合条件的提案区域，则返回空值
     if len(x_roi) == 0:

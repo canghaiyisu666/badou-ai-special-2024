@@ -5,7 +5,7 @@ from PIL import Image
 # 初始化Faster R-CNN对象，用于后续的图像检测
 frcnn = FRCNN()
 
-img_path = 'img/car.jpg'
+img_path = 'img/street.jpg'
 
 # 尝试打开指定的图像文件
 img = input(img_path)

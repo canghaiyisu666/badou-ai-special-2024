@@ -60,15 +60,19 @@ def shift(shape, anchors, stride=config.rpn_stride):
     shift_x = np.reshape(shift_x, [-1])
     shift_y = np.reshape(shift_y, [-1])
 
-    shifts = np.stack([shift_x, shift_y, shift_x, shift_y], axis=0)
+    shifts = np.stack([
+        shift_x,
+        shift_y,
+        shift_x,
+        shift_y
+    ], axis=0)
 
     shifts = np.transpose(shifts)
     number_of_anchors = np.shape(anchors)[0]
 
     k = np.shape(shifts)[0]
 
-    shifted_anchors = np.reshape(anchors, [1, number_of_anchors, 4]) + np.array(np.reshape(shifts, [k, 1, 4]),
-                                                                                keras.backend.floatx())
+    shifted_anchors = np.reshape(anchors, [1, number_of_anchors, 4]) + np.array(np.reshape(shifts, [k, 1, 4]), keras.backend.floatx())
     shifted_anchors = np.reshape(shifted_anchors, [k * number_of_anchors, 4])
     return shifted_anchors
 

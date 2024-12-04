@@ -1,3 +1,4 @@
+from keras import backend as K
 
 # 定义配置类，用于存储和访问模型训练和检测过程中的各种参数
 class Config:

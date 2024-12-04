@@ -123,9 +123,7 @@ def class_loss_regr(num_classes):
         x = y_true[:, :, 4 * num_classes:] - y_pred
         x_abs = K.abs(x)
         x_bool = K.cast(K.less_equal(x_abs, 1.0), 'float32')
-        loss = 4 * K.sum(
-            y_true[:, :, :4 * num_classes] * (x_bool * (0.5 * x * x) + (1 - x_bool) * (x_abs - 0.5))) / K.sum(
-            epsilon + y_true[:, :, :4 * num_classes])
+        loss = 4*K.sum(y_true[:, :, :4*num_classes] * (x_bool * (0.5 * x * x) + (1 - x_bool) * (x_abs - 0.5))) / K.sum(epsilon + y_true[:, :, :4*num_classes])
         return loss
 
     return class_loss_regr_fixed_num
@@ -291,7 +289,6 @@ class Generator(object):
                 regression = np.reshape(regression, [-1, 5])
 
                 tmp_inp = np.array(img)
-                tmp_targets = [np.expand_dims(np.array(classification, dtype=np.float32), 0),
-                               np.expand_dims(np.array(regression, dtype=np.float32), 0)]
+                tmp_targets = [np.expand_dims(np.array(classification,dtype=np.float32),0),np.expand_dims(np.array(regression,dtype=np.float32),0)]
 
                 yield preprocess_input(np.expand_dims(tmp_inp, 0)), tmp_targets, np.expand_dims(y, 0)

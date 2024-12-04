@@ -69,8 +69,10 @@ class FRCNN(object):
         hsv_tuples = [(x / len(self.class_names), 1., 1.)
                       for x in range(len(self.class_names))]
         self.colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
-        self.colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), self.colors))
-
+        self.colors = list(
+            map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)),
+                self.colors))
+    
     def get_img_output_length(self, width, height):
         def get_output_length(input_length):
             # input_length += 6
@@ -211,20 +213,19 @@ class FRCNN(object):
         labels = np.array(labels)
         probs = np.array(probs)
         boxes = np.array(bboxes,dtype=np.float32)
-        boxes[:, 0] = boxes[:, 0] * self.config.rpn_stride / width
-        boxes[:, 1] = boxes[:, 1] * self.config.rpn_stride / height
-        boxes[:, 2] = boxes[:, 2] * self.config.rpn_stride / width
-        boxes[:, 3] = boxes[:, 3] * self.config.rpn_stride / height
-        results = np.array(
-            self.bbox_util.nms_for_out(np.array(labels), np.array(probs), np.array(boxes), self.num_classes - 1, 0.4))
-
-        top_label_indices = results[:, 0]
-        top_conf = results[:, 1]
-        boxes = results[:, 2:]
-        boxes[:, 0] = boxes[:, 0] * old_width
-        boxes[:, 1] = boxes[:, 1] * old_height
-        boxes[:, 2] = boxes[:, 2] * old_width
-        boxes[:, 3] = boxes[:, 3] * old_height
+        boxes[:,0] = boxes[:,0]*self.config.rpn_stride/width
+        boxes[:,1] = boxes[:,1]*self.config.rpn_stride/height
+        boxes[:,2] = boxes[:,2]*self.config.rpn_stride/width
+        boxes[:,3] = boxes[:,3]*self.config.rpn_stride/height
+        results = np.array(self.bbox_util.nms_for_out(np.array(labels),np.array(probs),np.array(boxes),self.num_classes-1,0.4))
+        
+        top_label_indices = results[:,0]
+        top_conf = results[:,1]
+        boxes = results[:,2:]
+        boxes[:,0] = boxes[:,0]*old_width
+        boxes[:,1] = boxes[:,1]*old_height
+        boxes[:,2] = boxes[:,2]*old_width
+        boxes[:,3] = boxes[:,3]*old_height
 
         font = ImageFont.truetype(font='model_data/simhei.ttf',size=np.floor(3e-2 * np.shape(image)[1] + 0.5).astype('int32'))
 

@@ -13,7 +13,7 @@ import numpy as np
 import time
 import tensorflow as tf
 from utils.anchors import get_anchors
-
+import datetime
 """
 训练输出说明：
  148/2000 [=>............................] - ETA: 3:49:24 - rpn_cls: 8.5973 - rpn_regr: 1.3285 - detector_cls: 2.6863 - detector_regr: 1.6785
@@ -26,6 +26,7 @@ from utils.anchors import get_anchors
  155/2000 [=>............................] - ETA: 3:48:07 - rpn_cls: 8.4787 - rpn_regr: 1.3167 - detector_cls: 2.6680 - detector_regr: 1.6776
  156/2000 [=>............................] - ETA: 3:48:07 - rpn_cls: 8.4622 - rpn_regr: 1.3151 - detector_cls: 2.6654 - detector_regr: 1.6775
                                                 打印值分别代表：RPN分类损失、       边框偏移量损失、      分类网络分类损失、        分类网络边框偏移量损失
+         "/epoch{:03d}-loss{:.3f}-rpn{:.3f}-roi{:.3f}".format(i, curr_loss,  loss_rpn_cls+loss_rpn_regr,  loss_class_cls+loss_class_regr) + ".h5"
 """
 
 
@@ -59,9 +60,13 @@ def write_log(callback, names, logs, batch_no):
 
 
 if __name__ == "__main__":
+
+    start_time = datetime.datetime.now()
+    print(f"训练开始时间: {start_time}")
+
     config = Config()
     NUM_CLASSES = 21
-    EPOCH = 100
+    EPOCH = 8
     EPOCH_LENGTH = 2000
     bbox_util = BBoxUtility(overlap_threshold=config.rpn_max_overlap, ignore_threshold=config.rpn_min_overlap)
     annotation_path = '2007_train.txt'
@@ -83,19 +88,18 @@ if __name__ == "__main__":
     rpn_train = gen.generate()
     log_dir = "logs"
     # 训练参数设置
-    logging = TensorBoard(log_dir=log_dir)
-    callback = logging
+    callback = TensorBoard(log_dir=log_dir)
     callback.set_model(model_all)
 
     model_rpn.compile(loss={
-        'regression': smooth_l1(),
-        'classification': cls_loss()
-    }, optimizer=keras.optimizers.Adam(lr=1e-5)
+                'regression'    : smooth_l1(),
+                'classification': cls_loss()
+            },optimizer=keras.optimizers.Adam(lr=1e-5)
     )
     model_classifier.compile(loss=[
         class_loss_cls,
         class_loss_regr(NUM_CLASSES - 1)
-    ],
+        ], 
         metrics={'dense_class_{}'.format(NUM_CLASSES): 'accuracy'}, optimizer=keras.optimizers.Adam(lr=1e-5)
     )
     model_all.compile(optimizer='sgd', loss='mae')
@@ -107,7 +111,7 @@ if __name__ == "__main__":
     rpn_accuracy_rpn_monitor = []
     rpn_accuracy_for_epoch = []
     start_time = time.time()
-    # 最佳loss
+    # 初始化最佳损失为无穷大，以便在后续迭代中寻找最小损失
     best_loss = np.Inf
     # 数字到类的映射
     print('Starting training')
@@ -115,11 +119,17 @@ if __name__ == "__main__":
     for i in range(EPOCH):
 
         if i == 20:
-            model_rpn.compile(loss={'regression': smooth_l1(), 'classification': cls_loss()},
-                              optimizer=keras.optimizers.Adam(lr=1e-6))
-            model_classifier.compile(loss=[class_loss_cls, class_loss_regr(NUM_CLASSES - 1)],
-                                     metrics={'dense_class_{}'.format(NUM_CLASSES): 'accuracy'},
-                                     optimizer=keras.optimizers.Adam(lr=1e-6))
+            model_rpn.compile(loss={
+                        'regression'    : smooth_l1(),
+                        'classification': cls_loss()
+                    },optimizer=keras.optimizers.Adam(lr=1e-6)
+            )
+            model_classifier.compile(loss=[
+                class_loss_cls, 
+                class_loss_regr(NUM_CLASSES-1)
+                ], 
+                metrics={'dense_class_{}'.format(NUM_CLASSES): 'accuracy'},optimizer=keras.optimizers.Adam(lr=1e-6)
+            )
             print("Learning rate decrease")
 
         progbar = generic_utils.Progbar(EPOCH_LENGTH)
@@ -128,11 +138,9 @@ if __name__ == "__main__":
             if len(rpn_accuracy_rpn_monitor) == EPOCH_LENGTH and config.verbose:
                 mean_overlapping_bboxes = float(sum(rpn_accuracy_rpn_monitor)) / len(rpn_accuracy_rpn_monitor)
                 rpn_accuracy_rpn_monitor = []
-                print('Average number of overlapping bounding boxes from RPN = {} for {} previous iterations'.format(
-                    mean_overlapping_bboxes, EPOCH_LENGTH))
+                print('Average number of overlapping bounding boxes from RPN = {} for {} previous iterations'.format(mean_overlapping_bboxes, EPOCH_LENGTH))
                 if mean_overlapping_bboxes == 0:
-                    print(
-                        'RPN is not producing bounding boxes that overlap the ground truth boxes. Check RPN settings or keep training.')
+                    print('RPN is not producing bounding boxes that overlap the ground truth boxes. Check RPN settings or keep training.')
 
             X, Y, boxes = next(rpn_train)
 
@@ -178,15 +186,12 @@ if __name__ == "__main__":
             else:
                 selected_pos_samples = np.random.choice(pos_samples, config.num_rois // 2, replace=False).tolist()
             try:
-                selected_neg_samples = np.random.choice(neg_samples, config.num_rois - len(selected_pos_samples),
-                                                        replace=False).tolist()
+                selected_neg_samples = np.random.choice(neg_samples, config.num_rois - len(selected_pos_samples), replace=False).tolist()
             except:
-                selected_neg_samples = np.random.choice(neg_samples, config.num_rois - len(selected_pos_samples),
-                                                        replace=True).tolist()
+                selected_neg_samples = np.random.choice(neg_samples, config.num_rois - len(selected_pos_samples), replace=True).tolist()
 
             sel_samples = selected_pos_samples + selected_neg_samples
-            loss_class = model_classifier.train_on_batch([X, X2[:, sel_samples, :]],
-                                                         [Y1[:, sel_samples, :], Y2[:, sel_samples, :]])
+            loss_class = model_classifier.train_on_batch([X, X2[:, sel_samples, :]], [Y1[:, sel_samples, :], Y2[:, sel_samples, :]])
 
             write_log(callback, ['detection_cls_loss', 'detection_reg_loss', 'detection_acc'], loss_class, train_step)
 
@@ -214,8 +219,7 @@ if __name__ == "__main__":
                 rpn_accuracy_for_epoch = []
 
                 if config.verbose:
-                    print('Mean number of bounding boxes from RPN overlapping ground truth boxes: {}'.format(
-                        mean_overlapping_bboxes))
+                    print('Mean number of bounding boxes from RPN overlapping ground truth boxes: {}'.format(mean_overlapping_bboxes))
                     print('Classifier accuracy for bounding boxes from RPN: {}'.format(class_acc))
                     print('Loss RPN classifier: {}'.format(loss_rpn_cls))
                     print('Loss RPN regression: {}'.format(loss_rpn_regr))
@@ -228,18 +232,20 @@ if __name__ == "__main__":
                 start_time = time.time()
 
                 write_log(callback,
-                          ['Elapsed_time', 'mean_overlapping_bboxes', 'mean_rpn_cls_loss', 'mean_rpn_reg_loss',
-                           'mean_detection_cls_loss', 'mean_detection_reg_loss', 'mean_detection_acc', 'total_loss'],
-                          [time.time() - start_time, mean_overlapping_bboxes, loss_rpn_cls, loss_rpn_regr,
-                           loss_class_cls, loss_class_regr, class_acc, curr_loss], i)
+                        ['Elapsed_time', 'mean_overlapping_bboxes', 'mean_rpn_cls_loss', 'mean_rpn_reg_loss',
+                        'mean_detection_cls_loss', 'mean_detection_reg_loss', 'mean_detection_acc', 'total_loss'],
+                        [time.time() - start_time, mean_overlapping_bboxes, loss_rpn_cls, loss_rpn_regr,
+                        loss_class_cls, loss_class_regr, class_acc, curr_loss],i)
 
                 if config.verbose:
                     print('The best loss is {}. The current loss is {}. Saving weights'.format(best_loss, curr_loss))
                 if curr_loss < best_loss:
                     best_loss = curr_loss
 
-                model_all.save_weights(log_dir + "/epoch{:03d}-loss{:.3f}-rpn{:.3f}-roi{:.3f}".format(i, curr_loss,
-                                                                                                      loss_rpn_cls + loss_rpn_regr,
-                                                                                                      loss_class_cls + loss_class_regr) + ".h5")
+                model_all.save_weights(log_dir+"/epoch{:03d}-loss{:.3f}-rpn{:.3f}-roi{:.3f}".format(i,curr_loss,loss_rpn_cls+loss_rpn_regr,loss_class_cls+loss_class_regr)+".h5")
+
+                # 记录结束时间
+                end_time = datetime.datetime.now()
+                print(f"训练结束时间: {end_time}")
 
                 break

@@ -193,7 +193,7 @@ class BBoxUtility(object):
         return decode_bbox
 
     def detection_out(self, predictions, mbox_priorbox, num_classes, keep_top_k=300,
-                      confidence_threshold=0.5):
+                        confidence_threshold=0.5):
 
         # 网络预测的结果
         # 置信度
@@ -215,7 +215,7 @@ class BBoxUtility(object):
                     confs_to_process = c_confs[c_confs_m]
                     # 进行iou的非极大抑制
                     feed_dict = {self.boxes: boxes_to_process,
-                                 self.scores: confs_to_process}
+                                    self.scores: confs_to_process}
                     idx = self.sess.run(self.nms, feed_dict=feed_dict)
                     # 取出在非极大抑制中效果较好的内容
                     good_boxes = boxes_to_process[idx]
@@ -241,8 +241,8 @@ class BBoxUtility(object):
     def nms_for_out(self, all_labels, all_confs, all_bboxes, num_classes, nms):
         results = []
         nms_out = tf.image.non_max_suppression(self.boxes, self.scores,
-                                               self._top_k,
-                                               iou_threshold=nms)
+                                                self._top_k,
+                                                iou_threshold=nms)
         for c in range(num_classes):
             c_pred = []
             mask = all_labels == c
@@ -252,7 +252,7 @@ class BBoxUtility(object):
                 confs_to_process = all_confs[mask]
                 # 进行iou的非极大抑制
                 feed_dict = {self.boxes: boxes_to_process,
-                             self.scores: confs_to_process}
+                                self.scores: confs_to_process}
                 idx = self.sess.run(nms_out, feed_dict=feed_dict)
                 # 取出在非极大抑制中效果较好的内容
                 good_boxes = boxes_to_process[idx]
