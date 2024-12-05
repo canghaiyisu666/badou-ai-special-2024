@@ -109,13 +109,29 @@ if __name__ == '__main__':
     model = MobileNet(input_shape=(224, 224, 3))
     model.summary()
 
-    img_path = 'elephant.jpg'
-    img = image.load_img(img_path, target_size=(224, 224))
-    x = image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-    x = preprocess_input(x)
-    print('Input image shape:', x.shape)
 
-    preds = model.predict(x)
-    print(np.argmax(preds))
-    print('Predicted:', decode_predictions(preds, 1))  # 只显示top1
+
+
+
+    for i in {"bike", "earphone", "microwave", "moto", "pot", "refrigerator","sofa","car","shark","tiger","chair","bird","cat","train"}:  # 对十张照片进行准预测，并且计算准确率
+        path = "./imgs/" + i + ".jpg"
+        img = image.load_img(path, target_size=(224, 224))
+        x = image.img_to_array(img)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
+        preds = model.predict(x)
+        # 打印预测结果
+        print("result: ")
+        print(np.argmax(preds))
+        print('Predicted:', decode_predictions(preds, 1))  # 只显示top1
+
+        print("===========================" + i)
+        print('--------------------------------------------------------------------------')
+
+
+
+
+
+
+
+

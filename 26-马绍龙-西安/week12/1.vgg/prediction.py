@@ -19,11 +19,13 @@ saver.restore(sess, ckpt_filename)  # 创建一个Saver对象，用于保存和�
 # 最后结果进行softmax预测
 pro = tf.nn.softmax(prediction)
 
-for i in {"airp", "bike", "boat", "car", "cat", "dog", "horse", "sheep", "table", "train"}:    #对十张照片进行准预测，并且计算准确率
-    img = utils.load_image("./test_data/" + i + ".jpg")
+for i in {"bike", "earphone", "microwave", "moto", "pot", "refrigerator", "sofa", "car", "shark", "tiger", "chair",
+          "bird", "cat", "train"}:  # 对十张照片进行准预测，并且计算准确率
+    img = utils.load_image("./imgs/" + i + ".jpg")
     pre = sess.run(pro, feed_dict={inputs: img})
     # 打印预测结果
     print("result: ")
     utils.print_prob(pre[0], './synset.txt')
     print("===========================" + i)
     print('--------------------------------------------------------------------------')
+

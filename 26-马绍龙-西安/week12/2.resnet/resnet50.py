@@ -110,16 +110,36 @@ def ResNet50(input_shape=[224, 224, 3], classes=1000):
 if __name__ == '__main__':
     model = ResNet50()
     model.summary()  # 自动打印模型结构，包括每一层的名字，参数个数、输入输出形状（relu和池化中存在不可训练参数）
-    img_path = 'elephant.jpg'
-    # img_path = 'bike.jpg'
-    img = image.load_img(img_path, target_size=(224, 224))
-    x = image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-    x = preprocess_input(x)  # 调用接口，做了归一化预处理
 
-    print('Input image shape:', x.shape)
-    preds = model.predict(x)
-    print('Predicted:', decode_predictions(preds))  # keras自带解码，输出标签结果
+
+
+    for i in {"bike", "earphone", "microwave", "moto", "pot", "refrigerator","sofa","car","shark","tiger","chair","bird","cat","train"}:  # 对十张照片进行准预测，并且计算准确率
+        path = "./imgs/" + i + ".jpg"
+        img = image.load_img(path, target_size=(224, 224))
+        x = image.img_to_array(img)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
+
+        # 打印预测结果
+        print("result: ")
+        preds = model.predict(x)
+        print('Predicted:', decode_predictions(preds))
+        print("===========================" + i)
+        print('--------------------------------------------------------------------------')
+
+
+
+
+    # img_path = 'elephant.jpg'
+    # # img_path = 'bike.jpg'
+    # img = image.load_img(img_path, target_size=(224, 224))
+    # x = image.img_to_array(img)
+    # x = np.expand_dims(x, axis=0)
+    # x = preprocess_input(x)  # 调用接口，做了归一化预处理
+    #
+    # print('Input image shape:', x.shape)
+    # preds = model.predict(x)
+    # print('Predicted:', decode_predictions(preds))  # keras自带解码，输出标签结果
 
 
 

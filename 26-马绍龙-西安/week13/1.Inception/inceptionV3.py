@@ -245,8 +245,8 @@ if __name__ == '__main__':
     model.summary()
     model.load_weights("inception_v3_weights_tf_dim_ordering_tf_kernels.h5")
 
-    for i in {"airp", "bike", "boat", "car", "cat", "dog", "horse", "sheep", "table", "train"}:  # 对十张照片进行准预测，并且计算准确率
-        path = "./test_data/" + i + ".jpg"
+    for i in {"bike", "earphone", "microwave", "moto", "pot", "refrigerator","sofa","car","shark","tiger","chair","bird","cat","train"}:  # 对十张照片进行准预测，并且计算准确率
+        path = "./imgs/" + i + ".jpg"
         img = image.load_img(path, target_size=(299, 299))
         x = image.img_to_array(img)
         x = np.expand_dims(x, axis=0)
