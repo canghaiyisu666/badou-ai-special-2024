@@ -107,6 +107,7 @@ def preprocess_input(x):
 
 if __name__ == '__main__':
     model = MobileNet(input_shape=(224, 224, 3))
+    model.summary()
 
     img_path = 'elephant.jpg'
     img = image.load_img(img_path, target_size=(224, 224))

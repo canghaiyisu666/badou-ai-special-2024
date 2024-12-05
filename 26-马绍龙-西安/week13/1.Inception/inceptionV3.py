@@ -242,7 +242,7 @@ def preprocess_input(x):  # 把输入数据标准化为[-1, 1]的范围
 
 if __name__ == '__main__':
     model = InceptionV3()
-
+    model.summary()
     model.load_weights("inception_v3_weights_tf_dim_ordering_tf_kernels.h5")
 
     for i in {"airp", "bike", "boat", "car", "cat", "dog", "horse", "sheep", "table", "train"}:  # 对十张照片进行准预测，并且计算准确率
