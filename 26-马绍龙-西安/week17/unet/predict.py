@@ -17,11 +17,11 @@ if __name__ == "__main__":
     # 测试模式
     net.eval()
     # 读取所有图片路径
-    tests_path = glob.glob('data/test/*.png')
+    tests_path = glob.glob('dataset/test/*.tif')
     # 遍历素有图片
     for test_path in tests_path:
         # 保存结果地址
-        save_res_path = test_path.split('.')[0] + '_res.png'
+        save_res_path = test_path.split('.')[0] + '_res.tif'
         # 读取图片
         img = cv2.imread(test_path)
         # 转为灰度图
