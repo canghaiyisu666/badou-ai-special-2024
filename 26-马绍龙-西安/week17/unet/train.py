@@ -4,14 +4,14 @@ from torch import optim
 import torch.nn as nn
 import torch
 
-def train_net(net, device, data_path, epochs=40, batch_size=1, lr=0.00001):
+
+def train_net(net, device, data_path, epochs=40, batch_size=1, lr=1e-5):
     # 加载训练集
     isbi_dataset = ISBI_Loader(data_path)
-    train_loader = torch.utils.data.DataLoader(dataset=isbi_dataset,
-                                               batch_size=batch_size, 
-                                               shuffle=True)
-    # 定义RMSprop算法
-    optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
+    train_data = torch.utils.data.DataLoader(dataset=isbi_dataset, batch_size=batch_size, shuffle=True)
+    # 定义优化器。   RMSprop ， adam
+    # optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
+    optimizer = optim.Adam(net.parameters(), lr=lr)
     # 定义Loss算法
     criterion = nn.BCEWithLogitsLoss()
     # best_loss统计，初始化为正无穷
@@ -21,8 +21,8 @@ def train_net(net, device, data_path, epochs=40, batch_size=1, lr=0.00001):
         # 训练模式
         net.train()
         # 按照batch_size开始训练
-        for image, label in train_loader:
-            optimizer.zero_grad()
+        for image, label in train_data:
+            optimizer.zero_grad()  # 梯度清零
             # 将数据拷贝到device中
             image = image.to(device=device, dtype=torch.float32)
             label = label.to(device=device, dtype=torch.float32)
@@ -35,9 +35,10 @@ def train_net(net, device, data_path, epochs=40, batch_size=1, lr=0.00001):
             if loss < best_loss:
                 best_loss = loss
                 torch.save(net.state_dict(), 'best_model_new.pth')
-            # 更新参数
-            loss.backward()
-            optimizer.step()
+
+            loss.backward()  # 反向传播，计算梯度
+            optimizer.step()  # 更新参数
+
 
 if __name__ == "__main__":
     # 选择设备，有cuda用cuda，没有就用cpu
@@ -47,5 +48,4 @@ if __name__ == "__main__":
     # 将网络拷贝到deivce中
     net.to(device=device)
     # 指定训练集地址，开始训练
-    data_path = "data/train/"
-    train_net(net, device, data_path)
+    train_net(net, device, "dataset/train/")
