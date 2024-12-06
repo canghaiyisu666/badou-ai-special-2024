@@ -36,7 +36,7 @@ for rectangle in rectangles:
         cv2.rectangle(draw, (int(rectangle[0]), int(rectangle[1])), (int(rectangle[2]), int(rectangle[3])), (255, 0, 0),
                       1)
 
-        # 绘制人脸关键点
+        # 绘制人脸关键点,每一个矩形框内是5个关键点，眼睛，鼻子，嘴角 对应数据索引值为5，7，9，11，13
         for i in range(5, 15, 2):
             cv2.circle(draw, (int(rectangle[i + 0]), int(rectangle[i + 1])), 2, (0, 255, 0))
 

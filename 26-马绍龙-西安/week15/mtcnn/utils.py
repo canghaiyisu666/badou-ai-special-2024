@@ -156,55 +156,86 @@ def filter_face_24net(cls_prob,roi,rectangles,width,height,threshold):
         if x2>x1 and y2>y1:
             pick.append([x1,y1,x2,y2,sc])
     return NMS(pick,0.3)
-#-------------------------------------#
-#   对onet处理后的结果进行处理
-#-------------------------------------#
-def filter_face_48net(cls_prob,roi,pts,rectangles,width,height,threshold):
-    
-    prob = cls_prob[:,1]
-    pick = np.where(prob>=threshold)
+
+
+#---------------------------------------------#
+#---------------------------------------------#
+def filter_face_48net(cls_prob, roi, pts, rectangles, width, height, threshold):
+    """
+    对onet处理后的结果进行处理
+
+    参数:
+    - cls_prob: 分类概率数组。
+    - roi: 区域建议网络的输出。
+    - pts: 特征点坐标数组。
+    - rectangles: 检测框数组。
+    - width: 图像宽度。
+    - height: 图像高度。
+    - threshold: 概率阈值。
+
+    返回:
+    - 经过非极大值抑制后的检测框和特征点信息。
+    """
+
+    # 提取正脸概率
+    prob = cls_prob[:, 1]
+
+    # 选择概率大于阈值的检测框
+    pick = np.where(prob >= threshold)
     rectangles = np.array(rectangles)
 
-    x1  = rectangles[pick,0]
-    y1  = rectangles[pick,1]
-    x2  = rectangles[pick,2]
-    y2  = rectangles[pick,3]
+    # 提取检测框坐标
+    x1 = rectangles[pick, 0]
+    y1 = rectangles[pick, 1]
+    x2 = rectangles[pick, 2]
+    y2 = rectangles[pick, 3]
 
-    sc  = np.array([prob[pick]]).T
+    # 提取检测框的分类概率
+    sc = np.array([prob[pick]]).T
 
-    dx1 = roi[pick,0]
-    dx2 = roi[pick,1]
-    dx3 = roi[pick,2]
-    dx4 = roi[pick,3]
+    # 提取区域建议网络的输出
+    dx1 = roi[pick, 0]
+    dx2 = roi[pick, 1]
+    dx3 = roi[pick, 2]
+    dx4 = roi[pick, 3]
 
-    w   = x2-x1
-    h   = y2-y1
+    # 计算检测框的宽度和高度
+    w = x2 - x1
+    h = y2 - y1
 
-    pts0= np.array([(w*pts[pick,0]+x1)[0]]).T
-    pts1= np.array([(h*pts[pick,5]+y1)[0]]).T
-    pts2= np.array([(w*pts[pick,1]+x1)[0]]).T
-    pts3= np.array([(h*pts[pick,6]+y1)[0]]).T
-    pts4= np.array([(w*pts[pick,2]+x1)[0]]).T
-    pts5= np.array([(h*pts[pick,7]+y1)[0]]).T
-    pts6= np.array([(w*pts[pick,3]+x1)[0]]).T
-    pts7= np.array([(h*pts[pick,8]+y1)[0]]).T
-    pts8= np.array([(w*pts[pick,4]+x1)[0]]).T
-    pts9= np.array([(h*pts[pick,9]+y1)[0]]).T
+    # 计算特征点坐标
+    pts0 = np.array([(w * pts[pick, 0] + x1)[0]]).T
+    pts1 = np.array([(h * pts[pick, 5] + y1)[0]]).T
+    pts2 = np.array([(w * pts[pick, 1] + x1)[0]]).T
+    pts3 = np.array([(h * pts[pick, 6] + y1)[0]]).T
+    pts4 = np.array([(w * pts[pick, 2] + x1)[0]]).T
+    pts5 = np.array([(h * pts[pick, 7] + y1)[0]]).T
+    pts6 = np.array([(w * pts[pick, 3] + x1)[0]]).T
+    pts7 = np.array([(h * pts[pick, 8] + y1)[0]]).T
+    pts8 = np.array([(w * pts[pick, 4] + x1)[0]]).T
+    pts9 = np.array([(h * pts[pick, 9] + y1)[0]]).T
 
-    x1  = np.array([(x1+dx1*w)[0]]).T
-    y1  = np.array([(y1+dx2*h)[0]]).T
-    x2  = np.array([(x2+dx3*w)[0]]).T
-    y2  = np.array([(y2+dx4*h)[0]]).T
+    # 调整检测框坐标
+    x1 = np.array([(x1 + dx1 * w)[0]]).T
+    y1 = np.array([(y1 + dx2 * h)[0]]).T
+    x2 = np.array([(x2 + dx3 * w)[0]]).T
+    y2 = np.array([(y2 + dx4 * h)[0]]).T
 
-    rectangles=np.concatenate((x1,y1,x2,y2,sc,pts0,pts1,pts2,pts3,pts4,pts5,pts6,pts7,pts8,pts9),axis=1)
+    # 合并检测框和特征点信息
+    rectangles = np.concatenate((x1, y1, x2, y2, sc, pts0, pts1, pts2, pts3, pts4, pts5, pts6, pts7, pts8, pts9), axis=1)
 
+    # 初始化检测框数组
     pick = []
     for i in range(len(rectangles)):
-        x1 = int(max(0     ,rectangles[i][0]))
-        y1 = int(max(0     ,rectangles[i][1]))
-        x2 = int(min(width ,rectangles[i][2]))
-        y2 = int(min(height,rectangles[i][3]))
-        if x2>x1 and y2>y1:
-            pick.append([x1,y1,x2,y2,rectangles[i][4],
-                 rectangles[i][5],rectangles[i][6],rectangles[i][7],rectangles[i][8],rectangles[i][9],rectangles[i][10],rectangles[i][11],rectangles[i][12],rectangles[i][13],rectangles[i][14]])
-    return NMS(pick,0.3)
+        # 限制检测框在图像范围内
+        x1 = int(max(0, rectangles[i][0]))
+        y1 = int(max(0, rectangles[i][1]))
+        x2 = int(min(width, rectangles[i][2]))
+        y2 = int(min(height, rectangles[i][3]))
+        # 确保检测框宽度和高度大于0
+        if x2 > x1 and y2 > y1:
+            pick.append([x1, y1, x2, y2, rectangles[i][4],
+                         rectangles[i][5], rectangles[i][6], rectangles[i][7], rectangles[i][8], rectangles[i][9],
+                         rectangles[i][10], rectangles[i][11], rectangles[i][12], rectangles[i][13], rectangles[i][14]])
+    # 进行非极大值抑制
+    return NMS(pick, 0.3)
