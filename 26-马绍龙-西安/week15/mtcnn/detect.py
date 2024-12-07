@@ -27,8 +27,8 @@ for rectangle in rectangles:
         # 根据矩形和填充值裁剪图片
         crop_img = img[int(rectangle[1] + paddingH):int(rectangle[3] - paddingH),
                    int(rectangle[0] - paddingW):int(rectangle[2] + paddingW)]
-        # 确保裁剪后的图片存在且尺寸有效
-        if crop_img is None:
+
+        if crop_img is None:  # 确保裁剪后的图片存在且尺寸有效
             continue
         if crop_img.shape[0] < 0 or crop_img.shape[1] < 0:
             continue

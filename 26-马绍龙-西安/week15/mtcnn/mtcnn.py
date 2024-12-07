@@ -114,13 +114,12 @@ class mtcnn():
         #   把[0,255]映射到(-1,1)
         #-----------------------------#
         copy_img = (img.copy() - 127.5) / 127.5
-        origin_h, origin_w, _ = copy_img.shape
+        origin_h, origin_w, _ = copy_img.shape  # 获取复制图像的原始高度和宽度
         #-----------------------------#
         #   计算原始输入图像
         #   每一次缩放的比例
         #-----------------------------#
-        scales = utils.calculateScales(img)
-
+        scales = utils.calculateScales(img)  # 例如[1,0.709,0.709**,0,709***]
         out = []
         #-----------------------------#
         #   粗略计算人脸框
@@ -131,26 +130,25 @@ class mtcnn():
             ws = int(origin_w * scale)
             scale_img = cv2.resize(copy_img, (ws, hs))
             inputs = scale_img.reshape(1, *scale_img.shape)
-            # 图像金字塔中的每张图片分别传入Pnet得到output
-            output = self.Pnet.predict(inputs)
-            # 将所有output加入out
+            #  *号用于解包(unpacking)。具体来说，在 reshape 方法中使用 *会将 scale_img.shape 的各个元素作为独立的参数传递给 reshape
+            output = self.Pnet.predict(inputs)  # 图像金字塔中的每张图片分别传入Pnet得到预测值，并加入out
             out.append(output)
 
-        image_num = len(scales)
-        rectangles = []
-        for i in range(image_num):
-            # 有人脸的概率
-            cls_prob = out[i][0][0][:,:,1]
-            # 其对应的框的位置
-            roi = out[i][1][0]
+        image_num = len(scales)  # 获取图片的数量
+        rectangles = []  # 初始化一个空列表来存储所有检测到的矩形
 
-            # 取出每个缩放后图片的长宽
-            out_h, out_w = cls_prob.shape
-            out_side = max(out_h, out_w)
-            print(cls_prob.shape)
-            # 解码过程
-            rectangle = utils.detect_face_12net(cls_prob, roi, out_side, 1 / scales[i], origin_w, origin_h, threshold[0])
-            rectangles.extend(rectangle)
+        for i in range(image_num):  # 遍历每一张图片
+
+            #  out[0][0] shape:(1, 245, 380, 2)" out[i][0][0].shape=(245, 380, 2)
+            #  out[i][0]: 分类概率图           out[i][1]: 边界框回归图
+            cls_prob = out[i][0][0][:, :, 1]  # 获取当前图片中有人脸的概率      out[i][0]形状为 (1, height, width, 2)
+            roi = out[i][1][0]  # 获取当前图片中人脸框的位置              out[i][1]形状为 (1, height, width, 4)
+            out_h, out_w = cls_prob.shape  # 取出每个缩放后图片的长宽    245, 380
+            out_side = max(out_h, out_w)  # 存储缩放后图片的长边，用于后续的处理
+            # print(cls_prob.shape)  # 打印当前图片中人脸概率矩阵的形状，用于调试   cls_prob.shape===(245, 380)
+            rectangle = utils.detect_face_12net(cls_prob, roi, out_side, 1 / scales[i], origin_w, origin_h,
+                                                threshold[0])  # 解码过程，使用工具函数detect_face_12net来检测人脸
+            rectangles.extend(rectangle)  # 将检测到的矩形添加到列表中
 
         # 进行非极大抑制
         rectangles = utils.NMS(rectangles, 0.7)
