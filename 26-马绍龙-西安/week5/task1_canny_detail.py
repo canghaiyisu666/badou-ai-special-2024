@@ -8,7 +8,7 @@ if __name__ == '__main__':
 
     if pic_path[-4:] == '.png':  # .png图片在这里的存储格式是0到1的浮点数，所以要扩展到255再计算
         img = img * 255  # 还是浮点数类型
-    img = img.mean(axis=-1)  # 取均值的方法进行灰度化
+    img = img.mean(axis=-1)  # 取三通道均值的进行灰度化
     print("image", img)
 
     # 1、高斯平滑
@@ -16,12 +16,17 @@ if __name__ == '__main__':
     sigma = 0.5  # 高斯平滑时的高斯核参数，标准差，可调
     dim = 5  # 高斯核尺寸
     Gaussian_filter = np.zeros([dim, dim])  # 存储高斯核，这是数组不是列表了
-    tmp = [i - dim // 2 for i in range(dim)]  # 根据dim大小，生成一个等差序列，并以dim//2为中心进行偏移
+    tmp = [i - (dim // 2) for i in range(dim)]  # 根据dim大小，生成一个等差序列，并以dim//2为中心进行偏移
+                                              # range(dim) 生成 [0, 1, 2, 3, 4]]
+                                              # dim=5, tmp 为 [-2, -1, 0, 1, 2]
     n1 = 1 / (2 * math.pi * sigma ** 2)  # 高斯函数的系数
     n2 = -1 / (2 * sigma ** 2)  # 高斯函数幂
     for i in range(dim):
         for j in range(dim):
             Gaussian_filter[i, j] = n1 * math.exp(n2 * (tmp[i] ** 2 + tmp[j] ** 2))
+    print("=======GAUSSIAN======")
+    print(Gaussian_filter)
+    print("=======GAUSSIAN======")
     Gaussian_filter = Gaussian_filter / Gaussian_filter.sum()  # 归一化，同时高斯核赋值完成
 
     h, w = img.shape
@@ -99,7 +104,7 @@ if __name__ == '__main__':
     # 4、双阈值检测，连接边缘。遍历所有一定是边缘的点,查看8邻域是否存在有可能是边的点，进栈
     lower_boundary = img_tidu.mean() * 0.5
     high_boundary = lower_boundary * 3  # 这里我设置高阈值是低阈值的三倍
-    zhan = []
+    zhan = []                           # 保存强边缘点的坐标
     for i in range(1, img_yizhi.shape[0] - 1):  # 外圈边缘不考虑了
         for j in range(1, img_yizhi.shape[1] - 1):
             if img_yizhi[i, j] >= high_boundary:  # 取，一定是边的点
@@ -113,8 +118,8 @@ if __name__ == '__main__':
         a = img_yizhi[temp_1 - 1:temp_1 + 2, temp_2 - 1:temp_2 + 2]
         # 以下是对强边缘的8邻域内的每个点做判断， 如果是在阈值直接，直接设置为强边缘
         if (a[0, 0] < high_boundary) and (a[0, 0] > lower_boundary):
-            img_yizhi[temp_1 - 1, temp_2 - 1] = 255  # 这个像素点标记为边缘
-            zhan.append([temp_1 - 1, temp_2 - 1])  # 进栈
+            img_yizhi[temp_1 - 1, temp_2 - 1] = 255                     # 这个像素点标记为强边缘
+            zhan.append([temp_1 - 1, temp_2 - 1])                       # 进栈
         if (a[0, 1] < high_boundary) and (a[0, 1] > lower_boundary):
             img_yizhi[temp_1 - 1, temp_2] = 255
             zhan.append([temp_1 - 1, temp_2])
@@ -141,6 +146,11 @@ if __name__ == '__main__':
         for j in range(img_yizhi.shape[1]):
             if img_yizhi[i, j] != 0 and img_yizhi[i, j] != 255:
                 img_yizhi[i, j] = 0
+
+    print("=========LAST-IMAGE=========")
+    print(img_yizhi)
+    print(np.max(img_yizhi))
+    print("=========LAST-IMAGE=========")
 
     # 绘图
     plt.figure(4)
