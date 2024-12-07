@@ -136,7 +136,7 @@ class GAN():
                                                                                 #  r * c：表示生成样本的数量
                                                                                 #  latent_dim表示生成器的输入向量维度
         gen_imgs = self.generator.predict(noise)        # 使用生成器预测产生图像
-        gen_imgs = 0.5 * gen_imgs + 0.5                 # 将生成的图像像素值重新缩放至0-1范围
+        gen_imgs = 0.5 * gen_imgs + 0.5                 # 将生成的图像像素值重新缩放至0-1范围，因为生成器通过tanh激活输出为[-1,1]
         fig, axs = plt.subplots(r, c)                   # 创建一个子图网格用于展示生成的图像
         cnt = 0                                         # 初始化计数器以遍历所有生成的图像
         for i in range(r):
